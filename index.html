@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Controller API Biblioteca</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; line-height: 1.6; }
+        .controlli { margin-bottom: 20px; padding: 15px; background: #f4f4f4; border-radius: 8px; }
+        button { padding: 10px 15px; margin-right: 10px; cursor: pointer; border: none; border-radius: 4px; color: white; }
+        .btn-all { background: #28a745; }
+        .btn-recent { background: #007bff; }
+        .libro { background: #fff; border: 1px solid #ddd; margin: 10px 0; padding: 10px; border-left: 5px solid #007bff; }
+    </style>
+</head>
+<body>
+
+    <h1>Gestione Biblioteca (RESTful API)</h1>
+    
+    <div class="controlli">
+        <button class="btn-all" onclick="chiamaAPI('tutti')">Mostra Tutti i Libri</button>
+        <button class="btn-recent" onclick="chiamaAPI('recenti')">Libri post-2000</button>
+    </div>
+
+    <div id="display">
+        <p>Seleziona un'azione per caricare i dati dal Web Service.</p>
+    </div>
+
+    <script>
+        async function chiamaAPI(tipo) {
+            const display = document.getElementById('display');
+            display.innerHTML = "<em>Interrogando il controller...</em>";
+
+            try {
+                // Costruiamo l'URL con il parametro per il controller (es: api.php?azione=recenti)
+                const url = `api.php?azione=${tipo}`;
+                const risposta = await fetch(url);
+                const dati = await risposta.json();
+
+                display.innerHTML = `<h3>Risultati per: ${tipo}</h3>`;
+                dati.forEach(libro => {
+                    display.innerHTML += `
+                        <div class="libro">
+                            <strong>${libro.titolo}</strong> (${libro.anno})<br>
+                            <small>Autore: ${libro.autore}</small>
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                display.innerHTML = "<b style='color:red;'>Errore nella chiamata al Web Service.</b>";
+            }
+        }
+    </script>
+</body>
+</html>
