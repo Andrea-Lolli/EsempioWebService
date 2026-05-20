@@ -10,16 +10,17 @@ $libri = [
     ["id" => 4, "titolo" => "Project Hail Mary", "autore" => "Andy Weir", "anno" => 2021]
 ];
 
-// Leggiamo il parametro 'azione' dall'URL (es: api.php?azione=tutti)
-$azione = $_GET['azione'] ?? 'tutti';
+// Leggiamo la parte finale dell'URL (es: /api.php/tutti -> /tutti)
+// Se l'URL è solo api.php, impostiamo di default '/tutti'
+$percorso = $_SERVER['PATH_INFO'] ?? '/tutti';
 
-switch($azione) {
-    case 'tutti':
+switch($percorso) {
+    case '/tutti':
         // Metodo: Ritorna tutto il catalogo
         echo json_encode($libri);
         break;
 
-    case 'recenti':
+    case '/recenti':
         // Metodo: Filtra i libri pubblicati dal 2000 in poi
         $filtrati = array_values(array_filter($libri, function($l) {
             return $l['anno'] >= 2000;
@@ -29,17 +30,14 @@ switch($azione) {
 
     default:
         http_response_code(404);
-        echo json_encode(["errore" => "Metodo non trovato"]);
+        echo json_encode(["errore" => "Rotta non trovata"]);
         break;
 }
 
-// comando da terminale per eseguire il BE
-// prima istallate php sul computer e aggiungerlo alle variabili di ambiente se non l'avete fatto
+// comando da terminale per eseguire il BE:
 // php -S localhost:8000
 
-// url per vedere le risposte del BE
-// http://localhost:8000/api.php
-// http://localhost:8000/api.php?azione=tutti
-// http://localhost:8000/api.php?azione=recenti
+// Nuovi URL per vedere le risposte del BE basati sul routing:
+// http://localhost:8000/api.php/tutti
+// http://localhost:8000/api.php/recenti
 ?>
-
