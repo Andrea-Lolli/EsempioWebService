@@ -26,17 +26,17 @@
     </div>
 
     <script>
-        async function chiamaAPI(tipo) {
+        async function chiamaAPI(rotta) {
             const display = document.getElementById('display');
             display.innerHTML = "<em>Interrogando il controller...</em>";
 
             try {
-                // Costruiamo l'URL con il parametro per il controller (es: api.php?azione=recenti)
-                const url = `api.php?azione=${tipo}`;
+                // Costruiamo l'URL sfruttando il routing del controller (es: api.php/recenti)
+                const url = `api.php/${rotta}`;
                 const risposta = await fetch(url);
                 const dati = await risposta.json();
 
-                display.innerHTML = `<h3>Risultati per: ${tipo}</h3>`;
+                display.innerHTML = `<h3>Risultati per: /${rotta}</h3>`;
                 dati.forEach(libro => {
                     display.innerHTML += `
                         <div class="libro">
