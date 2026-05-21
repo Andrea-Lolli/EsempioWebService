@@ -17,8 +17,8 @@
     <h1>Gestione Biblioteca (RESTful API)</h1>
     
     <div class="controlli">
-        <button class="btn-all" onclick="chiamaAPI('tutti')">Mostra Tutti i Libri</button>
-        <button class="btn-recent" onclick="chiamaAPI('recenti')">Libri post-2000</button>
+        <button class="btn-all" onclick="mostraTutti()">Mostra Tutti i Libri</button>
+        <button class="btn-recent" onclick="mostraRecenti()">Libri post-2000</button>
     </div>
 
     <div id="display">
@@ -26,29 +26,57 @@
     </div>
 
     <script>
-        async function chiamaAPI(rotta) {
-            const display = document.getElementById('display');
-            display.innerHTML = "<em>Interrogando il controller...</em>";
+    // FUNZIONE PER RECUPERARE TUTTI I LIBRI (/tutti)
+    async function mostraTutti() {
+        const display = document.getElementById('display');
+        display.innerHTML = "<em>Interrogando il controller per il catalogo completo...</em>";
 
-            try {
-                // Costruiamo l'URL sfruttando il routing del controller (es: api.php/recenti)
-                const url = `api.php/${rotta}`;
-                const risposta = await fetch(url);
-                const dati = await risposta.json();
+        try {
+            // Chiamata esplicita alla rotta /tutti
+            const url = 'api.php/tutti';
+            const risposta = await fetch(url);
+            const dati = await risposta.json();
 
-                display.innerHTML = `<h3>Risultati per: /${rotta}</h3>`;
-                dati.forEach(libro => {
-                    display.innerHTML += `
-                        <div class="libro">
-                            <strong>${libro.titolo}</strong> (${libro.anno})<br>
-                            <small>Autore: ${libro.autore}</small>
-                        </div>
-                    `;
-                });
-            } catch (err) {
-                display.innerHTML = "<b style='color:red;'>Errore nella chiamata al Web Service.</b>";
-            }
+            display.innerHTML = `<h3>Risultati per: /tutti (Intero Catalogo)</h3>`;
+            dati.forEach(libro => {
+                display.innerHTML += `
+                    <div class="libro">
+                        <strong>${libro.titolo}</strong> (${libro.anno})<br>
+                        <small>Autore: ${libro.autore}</small>
+                    </div>
+                `;
+            });
+        } catch (err) {
+            display.innerHTML = "<b style='color:red;'>Errore durante il recupero del catalogo completo.</b>";
+            console.error(err);
         }
-    </script>
+    }
+
+    // FUNZIONE PER RECUPERARE SOLO I LIBRI RECENTI (/recenti)
+    async function mostraRecenti() {
+        const display = document.getElementById('display');
+        display.innerHTML = "<em>Interrogando il controller per i libri recenti...</em>";
+
+        try {
+            // Chiamata esplicita alla rotta /recenti
+            const url = 'api.php/recenti';
+            const risposta = await fetch(url);
+            const dati = await risposta.json();
+
+            display.innerHTML = `<h3>Risultati per: /recenti (Libri post-2000)</h3>`;
+            dati.forEach(libro => {
+                display.innerHTML += `
+                    <div class="libro" style="border-left-color: #007bff;">
+                        <strong>${libro.titolo}</strong> (${libro.anno})<br>
+                        <small>Autore: ${libro.autore}</small>
+                    </div>
+                `;
+            });
+        } catch (err) {
+            display.innerHTML = "<b style='color:red;'>Errore durante il recupero dei libri recenti.</b>";
+            console.error(err);
+        }
+    }
+</script>
 </body>
 </html>
