@@ -55,4 +55,18 @@ switch($percorso) {
         echo json_encode(["errore" => "Rotta non trovata"]);
         exit;
 }
+
+// Comando da terminale per avviare l'infrastruttura (BE + FE):
+// php -S localhost:8000
+
+// Link per aprire l'interfaccia utente (Frontend SPA):
+// http://localhost:8000/index.html
+
+// URL per vedere il Catalogo Paginato (Esempi con Query String):
+// http://localhost:8000/api.php/tutti?pagina=1
+// http://localhost:8000/api.php/tutti?pagina=2
+// http://localhost:8000/api.php/tutti?pagina=3
+
+// URL per la rotta semplice (Senza paginazione):
+// http://localhost:8000/api.php/recenti
 ?>
