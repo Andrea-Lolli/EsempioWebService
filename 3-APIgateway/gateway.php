@@ -10,7 +10,7 @@ if (empty($percorso)) {
 }
 $percorso = explode('?', $percorso)[0];
 
-// 1. GESTIONE ROUTING
+// GESTIONE ROUTING
 switch ($percorso) {
     case '/login':
         // La rotta di login è PUBBLICA (non richiede token)
