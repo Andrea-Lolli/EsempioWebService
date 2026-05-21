@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Infrastruttura Web Protetta da API Gateway</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; line-height: 1.6; background-color: #f8f9fa; }
+        .sezione { margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #dee2e6; }
+        input { padding: 8px; margin-right: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 9px 15px; cursor: pointer; border: none; border-radius: 4px; color: white; font-weight: bold; }
+        .btn-login { background: #007bff; }
+        .btn-libri { background: #28a745; }
+        .btn-logout { background: #6c757d; }
+        
+        .api-table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
+        .api-table th { background-color: #343a40; color: white; padding: 12px; text-align: left; }
+        .api-table td { padding: 12px; border-bottom: 1px solid #dee2e6; }
+        
+        .status-badge { inline-block; padding: 5px 10px; border-radius: 20px; font-size: 0.85em; font-weight: bold; }
+        .status-disconnected { background: #f8d7da; color: #721c24; }
+        .status-connected { background: #d4edda; color: #155724; }
+        .error-box { background: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+    <h1>Architettura di Sicurezza con API Gateway</h1>
+    
+    <div class="sezione">
+        Stato Autenticazione: 
+        <span id="stato-sessione" class="status-badge status-disconnected">Non autenticato</span>
+        <button id="btn-logout" class="btn-logout" style="display:none; margin-left: 15px;" onclick="eseguiLogout()">Logout</button>
+    </div>
+
+    <div id="area-login" class="sezione">
+        <h3>1. Effettua il Login (api_utenti.php)</h3>
+        <input type="text" id="username" placeholder="Username (admin)">
+        <input type="password" id="password" placeholder="Password (password123)">
+        <button class="btn-login" onclick="eseguiLogin()">Accedi</button>
+    </div>
+
+    <div class="sezione">
+        <h3>2. Richiesta Risorse Protette (api_libri.php)</h3>
+        <p>Questo bottone funzionerà solo se possiedi il Token rilasciato dal Gateway.</p>
+        <button class="btn-libri" onclick="richiediLibri()">Visualizza Tabella Libri</button>
+    </div>
+
+    <h3>Risposta del Server / Vista:</h3>
+    <div id="container-tabella">
+        <p style="color: #6c757d;">In attesa di azioni da parte dell'utente...</p>
+    </div>
+
+    <script>
+        const GATEWAY_URL = 'gateway.php';
+        
+        // Questa variabile globale simulerà la sessione del browser (es. LocalStorage)
+        let sessionToken = null;
+
+        // 1. FUNZIONE DI LOGIN (Invia credenziali via POST)
+        async function eseguiLogin() {
+            const userBox = document.getElementById('username').value;
+            const passBox = document.getElementById('password').value;
+            const container = document.getElementById('container-tabella');
+
+            try {
+                const risposta = await fetch(`${GATEWAY_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: userBox, password: passBox })
+                });
+
+                const dati = await risposta.json();
+
+                if (risposta.status === 200) {
+                    // Salviamo il token ricevuto dal server!
+                    sessionToken = dati.token;
+                    
+                    // Aggiorniamo la grafica
+                    document.getElementById('stato-sessione').className = "status-badge status-connected";
+                    document.getElementById('stato-sessione').innerText = `Autenticato come: ${dati.utente.username} (${dati.utente.ruolo})`;
+                    document.getElementById('area-login').style.display = "none";
+                    document.getElementById('btn-logout').style.display = "inline-block";
+                    container.innerHTML = `<p style="color: green;"><b>${dati.messaggio}</b> Ora puoi richiedere i libri.</p>`;
+                } else {
+                    container.innerHTML = `<div class="error-box"><b>Errore di Login:</b> ${dati.errore}</div>`;
+                }
+            } catch (err) {
+                container.innerHTML = "<div class='error-box'>Impossibile contattare il servizio di autenticazione.</div>";
+            }
+        }
+
+        // 2. RECUPERO RISORSA PROTETTA (Invia il Token nell'header Authorization)
+        async function richiediLibri() {
+            const container = document.getElementById('container-tabella');
+            container.innerHTML = "<em>Interrogando il Gateway sicuro...</em>";
+
+            try {
+                const risposta = await fetch(`${GATEWAY_URL}/libri`, {
+                    method: 'GET',
+                    headers: { 
+                        // Sfruttiamo lo standard HTTP inserendo il token nell'header di Authorization
+                        'Authorization': `Bearer ${sessionToken}` 
+                    }
+                });
+                
+                const rispostaOggetto = await risposta.json(); 
+
+                if (risposta.status === 200) {
+                    const elencoLibri = rispostaOggetto.data;       
+                    let htmlTabella = `<p><small>Provenienza dei dati: <b>${rispostaOggetto.servizio_origine}</b></small></p><table class="api-table"><thead><tr><th>ID</th><th>Titolo</th><th>Autore</th></tr></thead><tbody>`;
+
+                    elencoLibri.forEach(libro => {
+                        htmlTabella += `<tr><td><b>#${libro.id}</b></td><td>${libro.titolo}</td><td>${libro.autore}</td></tr>`;
+                    });
+
+                    htmlTabella += `</tbody></table>`;
+                    container.innerHTML = htmlTabella;
+                } else {
+                    // Qui vedremo l'errore 401 generato dal Gateway se il token non c'è o è scaduto
+                    container.innerHTML = `
+                        <div class="error-box">
+                            <h3>Errore HTTP ${risposta.status} (Non Autorizzato)</h3>
+                            <p>${rispostaOggetto.errore}</p>
+                        </div>
+                    `;
+                }
+
+            } catch (err) {
+                container.innerHTML = "<div class='error-box'>Errore di connessione con l'infrastruttura.</div>";
+            }
+        }
+
+        // 3. LOGOUT (Svuota il token locale)
+        function eseguiLogout() {
+            sessionToken = null; // Distruggiamo il token
+            document.getElementById('stato-sessione').className = "status-badge status-disconnected";
+            document.getElementById('stato-sessione').innerText = "Non autenticato";
+            document.getElementById('area-login').style.display = "block";
+            document.getElementById('btn-logout').style.display = "none";
+            document.getElementById('container-tabella').innerHTML = "<p>Sessione chiusa. Ti sei disconnesso correttamente.</p>";
+            document.getElementById('username').value = "";
+            document.getElementById('password').value = "";
+        }
+    </script>
+</body>
+</html>
